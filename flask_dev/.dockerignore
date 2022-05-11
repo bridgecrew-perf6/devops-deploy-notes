@@ -1,0 +1,11 @@
+node_modules
+app/static
+app/sync/docs
+docs
+**/tests
+Gruntfile.js
+package.json
+package-lock.json
+/scripts
+.env
+.git

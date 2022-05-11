@@ -1,0 +1,23 @@
+# pull official base image
+FROM python:3.9.5-slim-buster
+
+# set work directory
+WORKDIR /flask_app
+
+# set environment variables - prevents the creation of pyc and buffering to stdout and stderr
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# upgrade pip just to be safe
+RUN pip install --upgrade pip
+
+# copy over local from editor to Docker workdir
+COPY . /flask_app
+
+# addresses psycopg installation error: https://stackoverflow.com/questions/62715570/failing-to-install-psycopg2-binary-on-new-docker-container
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc \
+    && pip install psycopg2
+
+# run installation
+RUN pip install -r requirements.txt

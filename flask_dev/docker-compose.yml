@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  web:
+    # images are a way of naming containers, and skipping building for containers without specific docker images
+    image: flask-docker-example
+    # if this were a purely local docker configuration, the build section would just be the relative path in which the dockerfile lies
+    # 
+    build: 
+      context: ./
+      dockerfile: Dockerfile.dev
+    command: python application.py
+    # there are named volumes (not this one) and binded volumes, volumes are used for
+    # persisting data outside of docker containers. Named volumes do this explicitly, while
+    # binded volumes persist data based on changes from a relative file path (this also makes the container update upon changes to your code)
+    volumes:
+      - ./:/flask_app
+    ports:
+      - 5001:5001
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  db:
+    image: postgres:13-alpine
+    # named volume (reference note above)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=test_username
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=test_database
+    networks:
+      - app_network
+  
+  cache:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - tempdata:/data
+    networks:
+      - app_network
+
+  workers:
+    image: flask-docker-example
+    depends_on: 
+      - cache
+    command: flask rqworkers 
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+  tempdata:
+# networks are used to define more complex networking architectures for Docker Swarm services (might look
+# into more later)
+networks:
+  app_network:

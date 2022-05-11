@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  web:
+    image: flask-docker-example-prod
+    build: 
+      context: ./
+      dockerfile: Dockerfile.prod
+    # number of workers to use for gunicorn: (2 x num_cores) + 1
+    command: gunicorn --bind 0.0.0.0:5001 app.wsgi:application
+    # no need for a volumes option - as we don't expect to change this code
+    # changing from port to expose bottlenecks port access through the NGINX container's port (shown below)
+    expose:
+      - 5001
+    # usually, one would define a new env file specifically for the web app: "- ./.env.prod"
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    # nginx creates a proxy server that recieves requests from a port (in this case 1337) - to port 80 in the docker container
+    ports:
+      - 1337:80
+    # this is necessary as the webserver needs to be up first
+    depends_on:
+      - web
+    networks:
+      - app_network
+
+  db:
+    image: postgres:13-alpine
+    # named volume (reference note above)
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data/
+    # usually, one would define a new env file specifically for the database: "- ./.env.prod.db"
+    environment:
+      - POSTGRES_USER=test_username
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=test_database
+    networks:
+      - app_network
+  
+  cache:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - tempdata:/data
+    networks:
+      - app_network
+
+  workers:
+    image: flask-docker-example-prod
+    depends_on: 
+      - cache
+    command: flask rqworkers
+    networks:
+      - app_network
+
+volumes:
+  postgres_data_prod:
+  tempdata:
+# networks are used to define more complex networking architectures for Docker Swarm services (might look
+# into more later)
+networks:
+  app_network:
