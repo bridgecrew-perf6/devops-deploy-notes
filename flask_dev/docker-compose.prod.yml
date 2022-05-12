@@ -7,7 +7,7 @@ services:
       context: ./
       dockerfile: Dockerfile.prod
     # number of workers to use for gunicorn: (2 x num_cores) + 1
-    command: gunicorn --bind 0.0.0.0:5001 app.wsgi:application
+    command: gunicorn -w 4 --bind 0.0.0.0:5001 app.wsgi:application
     # no need for a volumes option - as we don't expect to change this code
     # changing from port to expose bottlenecks port access through the NGINX container's port (shown below)
     expose:
@@ -24,9 +24,10 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    # nginx creates a proxy server that recieves requests from a port (in this case 1337) - to port 80 in the docker container
+    # nginx creates a proxy server that recieves requests from a port (in this case 80) - to port 80 in the docker container
+    # for deployment, usually you have to set incoming traffic to be accepted through port 80, as that is the port AWS restricts traffic to via HTTP request
     ports:
-      - 1337:80
+      - 80:80
     # this is necessary as the webserver needs to be up first
     depends_on:
       - web

@@ -9,3 +9,4 @@ TODO:
 - Add ElasticSearch docker instance
 - Add Database Population services
 - Change File Structure [remove flask_dev]
+- Change flask directory name to [flask_docker_dev] (something more descriptive!)

@@ -6,16 +6,15 @@ from app import redis_queue
 
 view = Blueprint("view", __name__)
 
-def get_current_weather(delay):
+def get_current_weather(delay, API_KEY):
     time.sleep(delay)
-    API_KEY = os.environ.get("API_KEY", None)
     URL = f"https://api.openweathermap.org/data/2.5/onecall?lat=30.26&lon=97.74&exclude=minutely,hourly,daily,alerts&appid={API_KEY}"
     response = requests.get(URL)
     try:
         status_code, data = response.status_code, response.json()
         return status_code, data["current"]["weather"]
     except:
-        return response.status_code, "Weather API Call Failed"
+        return response.status_code, f"Weather API Call Failed: {response.text}"
 
 # credit: https://blog.abbasmj.com/implementing-redis-task-queues-and-deploying-on-docker-compose
 @view.route("/")
@@ -29,7 +28,9 @@ def index():
 
 @view.route("/request_weather/")
 def request_weather():
-    task = redis_queue.enqueue(get_current_weather, args=(10,))
+    # Note: this is a terrible solution, best to try and figure out how to access config variables from the app.config object in the future!
+    API_KEY = os.environ.get("API_KEY", None)
+    task = redis_queue.enqueue(get_current_weather, args=(2, API_KEY,))
     return make_response({"message": f"SUCCESS - enqueued job: {task.id}"}, 200)
 
 @view.route("/weather/<job_id>/")

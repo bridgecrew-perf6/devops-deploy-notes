@@ -7,7 +7,7 @@ from rq import Queue, Worker, Connection
 import click
 
 # redis instace
-redis = Redis(host="cache", port=6379)
+redis = Redis(host="cache", port=6379) # must be hosted by "cache" due to the container being named "cache" - url looks like : redis://cache:6379
 redis_queue = Queue("default", connection=redis)
 redis_queue_hi = Queue("high", connection=redis)
 redis_queue_lo = Queue("low", connection=redis)

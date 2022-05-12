@@ -1,3 +1,12 @@
+###########
+# TEMPLATE 
+# 1. Pull python base image
+# 2. Set a working directory for Docker images, and set default python env vars
+# 3. Upgrade pip just in case
+# 4. Copy all files [or select files] to the working directory
+# 5. Install dependencies and [optionally] run scripts
+###########
+
 # pull official base image
 FROM python:3.9.5-slim-buster
 
@@ -15,9 +24,10 @@ RUN pip install --upgrade pip
 COPY . /flask_app
 
 # addresses psycopg installation error: https://stackoverflow.com/questions/62715570/failing-to-install-psycopg2-binary-on-new-docker-container
-RUN apt-get update \
-    && apt-get -y install libpq-dev gcc \
-    && pip install psycopg2
+# [IMPORANT] - another solution is to install psycopg-binary instead
+# RUN apt-get update \
+#     && apt-get -y install libpq-dev gcc \
+#     && pip install psycopg2
 
 # run installation
 RUN pip install -r requirements.txt
